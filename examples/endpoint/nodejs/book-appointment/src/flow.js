@@ -195,9 +195,9 @@ export const getNextScreen = async (decryptedBody) => {
 
       // Update the appointment screen response based on the API response
       return {
-        ...SCREEN_RESPONSES.APPOINTMENT,
+        ...availableTimes,
         data: {
-          ...SCREEN_RESPONSES.APPOINTMENT.data,
+          ...availableTimes,
           // Update fields based on API response or user selection
           time: availableTimes.map(time => ({
             id: time.name, // Assuming the API returns time IDs directly
