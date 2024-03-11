@@ -36,7 +36,7 @@ MIIE...
 -----[REPLACE THIS] END RSA PRIVATE KEY-----```
 */
 
-app.post("/", async (req, res) => {
+app.post("/appointment", async (req, res) => {
   if (!PRIVATE_KEY) {
     throw new Error(
       'Private key is empty. Please check your env variable "PRIVATE_KEY".'
