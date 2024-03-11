@@ -9,6 +9,7 @@ import express from "express";
 import { decryptRequest, encryptResponse, FlowEndpointException } from "./encryption.js";
 import { getNextScreen } from "./flow.js";
 import crypto from "crypto";
+import fs from "fs";
 
 const app = express();
 
@@ -21,8 +22,11 @@ app.use(
   }),
 );
 
-const { APP_SECRET, PRIVATE_KEY, PASSPHRASE = "", PORT = "3000" } = process.env;
-
+// const { APP_SECRET, PRIVATE_KEY, PASSPHRASE = "", PORT = "3000" } = process.env;
+const PORT = '3000'
+const APP_SECRET='5b7f7dfdd286307d5cb53cac174ee05a'
+const PRIVATE_KEY= fs.readFileSync('./src/private_new.pem', 'utf-8')
+const PASSPHRASE='Mohit@256951'
 /*
 Example:
 ```-----[REPLACE THIS] BEGIN RSA PRIVATE KEY-----
