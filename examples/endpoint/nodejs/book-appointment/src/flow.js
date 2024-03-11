@@ -148,10 +148,6 @@ const SCREEN_RESPONSES = {
   },
 };
 
-// const departmentData = async () =>{
-// const response = await axios.get('https://app.bhilwarahealthcare.in/api/method/sahaj.api.get_department_list');
-// const department_list = response.data.data;
-// console.log(department_list)}
 
 export const getNextScreen = async (decryptedBody) => {
   const { screen, data, version, action, flow_token } = decryptedBody;
@@ -180,7 +176,6 @@ export const getNextScreen = async (decryptedBody) => {
   if (action === "INIT") {
     const response = await axios.get('https://app.bhilwarahealthcare.in/api/method/sahaj.api.get_department_list_flow');
     const department_list = response.data.data;
-    console.log(department_list)
     return {
       ...SCREEN_RESPONSES.APPOINTMENT,
       data: {
