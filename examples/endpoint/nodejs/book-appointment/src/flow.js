@@ -1,280 +1,425 @@
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-// this object is generated from Flow Builder under "..." > Endpoint > Snippets > Responses
+// Import required modules
 import axios from 'axios';
-const SCREEN_RESPONSES = {
-  APPOINTMENT: {
-    version: "3.0",
-    screen: "APPOINTMENT",
-    data: {
-      department: [
-        {
-          id: "shopping",
-          title: "Shopping & Groceries",
-        },
-        {
-          id: "clothing",
-          title: "Clothing & Apparel",
-        },
-        {
-          id: "home",
-          title: "Home Goods & Decor",
-        },
-        {
-          id: "electronics",
-          title: "Electronics & Appliances",
-        },
-        {
-          id: "beauty",
-          title: "Beauty & Personal Care",
-        },
+import moment from 'moment';
 
-        {
-          id: "bcc",
-          title: "Bhilwara",
-        },
 
-      ],
-      location: [
-        {
-          id: "1",
-          title: "King\u2019s Cross, London",
-        },
-        {
-          id: "2",
-          title: "Oxford Street, London",
-        },
-        {
-          id: "3",
-          title: "Covent Garden, London",
-        },
-        {
-          id: "4",
-          title: "Piccadilly Circus, London",
-        },
-      ],
-      is_location_enabled: true,
-      date: [
-        {
-          id: "2024-01-01",
-          title: "Mon Jan 01 2024",
-        },
-        {
-          id: "2024-01-02",
-          title: "Tue Jan 02 2024",
-        },
-        {
-          id: "2024-01-03",
-          title: "Wed Jan 03 2024",
-        },
-      ],
-      is_date_enabled: true,
-      time: [
-        {
-          id: "10:30",
-          title: "10:30",
-        },
-        {
-          id: "11:00",
-          title: "11:00",
-          enabled: false,
-        },
-        {
-          id: "11:30",
-          title: "11:30",
-        },
-        {
-          id: "12:00",
-          title: "12:00",
-          enabled: false,
-        },
-        {
-          id: "12:30",
-          title: "12:30",
-        },
-      ],
-      is_time_enabled: true,
-    },
-  },
-  DETAILS: {
-    version: "3.0",
-    screen: "DETAILS",
-    data: {
-      department: "beauty",
-      location: "1",
-      date: "2024-01-01",
-      time: "11:30",
-    },
-  },
-  SUMMARY: {
-    version: "3.0",
-    screen: "SUMMARY",
-    data: {
-      appointment:
-        "Beauty & Personal Care Department at Kings Cross, London\nMon Jan 01 2024 at 11:30.",
-      details:
-        "Name: John Doe\nEmail: john@example.com\nPhone: 123456789\n\nA free skin care consultation, please",
-      department: "beauty",
-      location: "1",
-      date: "2024-01-01",
-      time: "11:30",
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "123456789",
-      more_details: "A free skin care consultation, please",
-    },
-  },
-  TERMS: {
-    version: "3.0",
-    screen: "TERMS",
-    data: {},
-  },
-  SUCCESS: {
-    version: "3.0",
-    screen: "SUCCESS",
-    data: {
-      extension_message_response: {
-        params: {
-          flow_token: "flows-builder-2c8e04d8",
-          some_param_name: "PASS_CUSTOM_VALUE",
-        },
-      },
-    },
-  },
+// Define global variables
+let department_list = [];
+let time_list = [];
+let date_list = [];
+let slot_list = [];
+let anaesthetics_list = [];
+let doctor_mobile = '';
+
+// // Function to fetch department list from the API
+const fetchDepartmentList = async () => {
+	try {
+		const response = await axios.get('https://online.sahajhospital.com/api/method/hospital.wa_flow.doctor_department_surgery?mobile=8109066434');
+		department_list = response.data.data.surgeries;
+		doctor_mobile = response.data.data.doctor_mobile;
+		console.log("mobile_data", doctor_mobile);
+	} catch (error) {
+		console.error("Error fetching department list:", error);
+		// Handle error if API call fails
+		throw new Error("Error fetching department list");
+	}
+};
+
+const fetchAnaestheticsList = async () => {
+	try {
+		const response = await axios.get('https://online.sahajhospital.com/api/method/hospital.wa_flow.get_all_anaesthetics');
+		anaesthetics_list = response.data.data;
+	} catch (error) {
+		console.error("Error fetching department list:", error);
+		// Handle error if API call fails
+		throw new Error("Error fetching department list");
+	}
+};
+
+const fetchTimeList = async (date,requested_minutes) => {
+	try {
+		const response = await axios.get(`https://online.sahajhospital.com/api/method/hospital.wa_flow.available_slots?requested_minutes=${requested_minutes}&date=${date}`);
+		console.log("bccresponse", response.data);
+		time_list = response.data.message.map(department => ({
+			id: department.id.toString(), // Convert id to string
+			title: department.title,
+		}));
+	} catch (error) {
+		console.error("Error fetching Time list:", error);
+		// Handle error if API call fails
+		throw new Error("Error fetching Time list");
+	}
+};
+
+const otConfirmation = async (bookingDetails) => {
+	try {
+		const data = {
+			department: bookingDetails.department,
+			date: bookingDetails.date,
+			slot: bookingDetails.slot,
+			start_time_requested: bookingDetails.preferred_time,
+			anaesthetic: bookingDetails.anesthetic_name,
+			mobile: bookingDetails.mobile,
+		};
+
+		const response = await axios.post('https://online.sahajhospital.com/api/method/hospital.wa_flow.create_ot_booking', data);
+		// console.log("response", response.data.data);
+
+		const ot_booking = {
+			ot: response.data.data[0].ot,
+			date: response.data.data[0].date,
+			start_time: response.data.data[0].start_time,
+			end_time: response.data.data[0].end_time,
+			anesthetic_name: response.data.data[0].anesthetic_name
+		};
+
+		// console.log("book", ot_booking);
+		return ot_booking;
+	} catch (error) {
+		console.error("Error fetching OT Confirmation:", error);
+		// Handle error if API call fails
+		throw new Error("Error fetching OT Confirmation");
+	}
+};
+
+const generateDateJSON = () => {
+	const dates = [];
+	for (let i = 0; i < 10; i++) {
+		const date = moment().add(i, 'days');
+		dates.push({
+			id: date.format('YYYY-MM-DD'),
+			title: date.format('ddd MMM DD YYYY')
+		});
+	}
+	return dates;
+};
+
+// // Function to generate slots duation
+const generateSlotDurations = () => {
+	const slot = [
+		{ id: "1", title: '30 Min' },
+		{ id: "2", title: '60 Min' },
+		{ id: "3", title: '90 Min' },
+		{ id: "4", title: '120 Min' },
+		{ id: "5", title: '150 Min' },
+		{ id: "6", title: '180 Min' },
+		{ id: "7", title: '210 Min' }
+	];
+	return slot;
+};
+
+// //function to fetch slots list
+const fetchSlotList = async () => {
+	slot_list = generateSlotDurations();
 };
 
 
+// Function to fetch date list
+const fetchDateList = async () => {
+	date_list = generateDateJSON();
+};
+
+// Define screen responses
+
+const SCREEN_RESPONSES = {
+    QUESTION_ONE: {
+        "version": "3.0",
+        "screen": "QUESTION_ONE",
+        "data": {
+            "department": [
+                {
+                    "id": "shopping",
+                    "title": "Shopping & Groceries"
+                },
+                {
+                    "id": "clothing",
+                    "title": "Clothing & Apparel"
+                },
+                {
+                    "id": "home",
+                    "title": "Home Goods & Decor"
+                },
+                {
+                    "id": "electronics",
+                    "title": "Electronics & Appliances"
+                },
+                {
+                    "id": "beauty",
+                    "title": "Beauty & Personal Care"
+                }
+            ],
+            "slot": [
+                {
+                    "id": "1",
+                    "title": "30 Min"
+                },
+                {
+                    "id": "2",
+                    "title": "60 Min"
+                },
+                {
+                    "id": "3",
+                    "title": "90 Min"
+                },
+                {
+                    "id": "4",
+                    "title": "120 Min"
+                }
+            ],
+            "date": [
+                {
+                    "id": "2024-01-01",
+                    "title": "Mon Jan 01 2024"
+                },
+                {
+                    "id": "2024-01-02",
+                    "title": "Tue Jan 02 2024"
+                },
+                {
+                    "id": "2024-01-03",
+                    "title": "Wed Jan 03 2024"
+                }
+            ],
+            "is_date_enabled": true,
+            "mobile": "918875627151"
+        }
+    },
+    QUESTION_TWO: {
+        "version": "3.0",
+        "screen": "QUESTION_TWO",
+        "data": {
+            "department": "Total Knee Replacement U\/L",
+            "mobile": "918875627151",
+            "date": "2024-01-01",
+            "slot": "10:30",
+            "preferred_time": [
+                {
+                    "id": "1",
+                    "title": "08:00"
+                },
+                {
+                    "id": "2",
+                    "title": "09:00"
+                },
+                {
+                    "id": "3",
+                    "title": "11:00"
+                },
+                {
+                    "id": "4",
+                    "title": "12:30"
+                }
+            ],
+            "anesthetic_name": [
+                {
+                    "id": "Dr_Rahul_Jain",
+                    "title": "Dr. Rahul Jain"
+                },
+                {
+                    "id": "Dr_Vinod_Jain",
+                    "title": "Dr Vinod Jain"
+                }
+            ],
+            "is_time_enabled": true
+        }
+    },
+    QUESTION_THREE: {
+        "version": "3.0",
+        "screen": "QUESTION_THREE",
+        "data": {
+            "ot": "OT 1",
+            "date": "2024-01-01",
+            "start_time": "10:30",
+            "end_time": "10:30",
+            "anesthetic_name": "General Anesthesia"
+        }
+    },
+    SUCCESS: {
+        "version": "3.0",
+        "screen": "SUCCESS",
+        "data": {
+            "extension_message_response": {
+                "params": {
+                    "flow_token": "750caadc-0e93-419c-b7ea-49098105706c",
+                    "some_param_name": "PASS_CUSTOM_VALUE"
+                }
+            }
+        }
+    },
+};
+
+// Function to handle next screen request
 export const getNextScreen = async (decryptedBody) => {
-  const { screen, data, version, action, flow_token } = decryptedBody;
-  // handle health check request
-  if (action === "ping") {
-    return {
-      version,
-      data: {
-        status: "active",
-      },
-    };
-  }
+	const { screen, data, version, action, flow_token } = decryptedBody;
 
-  // handle error notification
-  if (data?.error) {
-    console.warn("Received client error:", data);
-    return {
-      version,
-      data: {
-        acknowledged: true,
-      },
-    };
-  }
+	// console.log(screen);
+	// console.log(data);
+	// console.log(version);
+	// console.log(action);
+	// console.log(flow_token);
 
-  // handle initial request when opening the flow and display APPOINTMENT screen
-  if (action === "INIT") {
-    const response = await axios.get('https://app.bhilwarahealthcare.in/api/method/sahaj.api.get_department_list_flow');
-    const department_list = response.data.data;
-    return {
-      ...SCREEN_RESPONSES.APPOINTMENT,
-      data: {
-        // ...SCREEN_RESPONSES.APPOINTMENT.data,
-        // these fields are disabled initially. Each field is enabled when previous fields are selected
-        department: department_list,
-        location :SCREEN_RESPONSES.APPOINTMENT.data.location,
-        date :SCREEN_RESPONSES.APPOINTMENT.data.date,
-        time :SCREEN_RESPONSES.APPOINTMENT.data.time,
-        is_location_enabled: false,
-        is_date_enabled: false,
-        is_time_enabled: false,
-      },
-    };
-  }
+	// Handle ping action
+	if (action === "ping") {
+		return {
+			version,
+			data: {
+				status: "active",
+			},
+		};
+	}
 
-  if (action === "data_exchange") {
-    // handle the request based on the current screen
-    switch (screen) {
-      // handles when user interacts with APPOINTMENT screen
-      case "APPOINTMENT":
-        // update the appointment fields based on current user selection
+	// Handle error notification
+	if (data?.error) {
+		console.warn("Received client error:", data);
+		return {
+			version,
+			data: {
+				acknowledged: true,
+			},
+		};
+	}
+
+	// Handle initial request
+	if (action === "INIT") {
+		// Fetch department list if it's empty
+		if (department_list.length === 0) {
+			await fetchDepartmentList();
+		}
+
+		// Fetch date list if it's empty
+		if (date_list.length === 0) {
+			await fetchDateList();
+		}
+
+		// Fetch slot list if it's empty
+		if (slot_list.length === 0) {
+			await fetchSlotList();
+		}
+
+		// console.log(department_list);
+		// console.log(date_list);
+		// console.log(slot_list);
 
 
-        return {
-          ...SCREEN_RESPONSES.APPOINTMENT,
-          data: {
-            // copy initial screen data then override specific fields
-            departmentData,
-            // ...SCREEN_RESPONSES.APPOINTMENT.data,
-            // each field is enabled only when previous fields are selected
-            is_location_enabled: Boolean(data.department),
-            is_date_enabled: Boolean(data.department) && Boolean(data.location),
-            is_time_enabled:
-              Boolean(data.department) &&
-              Boolean(data.location) &&
-              Boolean(data.date),
+		return {
+			...SCREEN_RESPONSES.QUESTION_ONE,
+			data: {
+				department: department_list,
+				date: date_list,
+				slot: slot_list,
+				is_date_enabled: true,
+				mobile: doctor_mobile,
 
-            //TODO: filter each field options based on current selection, here we filter randomly instead
-            location: SCREEN_RESPONSES.APPOINTMENT.data.location.slice(0, 3),
-            date: SCREEN_RESPONSES.APPOINTMENT.data.date.slice(0, 3),
-            time: SCREEN_RESPONSES.APPOINTMENT.data.time.slice(0, 3),
-          },
-        };
+			},
+		};
+	}
 
-      // handles when user completes DETAILS screen
-      case "DETAILS":
-        // the client payload contains selected ids from dropdown lists, we need to map them to names to display to user
-        const departmentName =
-          SCREEN_RESPONSES.APPOINTMENT.data.department.find(
-            (dept) => dept.id === data.department
-          ).title;
-        const locationName = SCREEN_RESPONSES.APPOINTMENT.data.location.find(
-          (loc) => loc.id === data.location
-        ).title;
-        const dateName = SCREEN_RESPONSES.APPOINTMENT.data.date.find(
-          (date) => date.id === data.date
-        ).title;
+	// Handle data exchange action
+	if (action === "data_exchange") {
+		// Handle request based on the current screen
+		switch (screen) {
+			case "QUESTION_ONE":
+				// Update the appointment fields based on current user selection
 
-        const appointment = `${departmentName} at ${locationName}
-${dateName} at ${data.time}`;
+				const date = data.date;
+				const slot_id = data.slot;
+				const slots = [
+					{'id': "1", 'title': '30 Min'},
+					{'id': "2", 'title': '60 Min'},
+					{'id': "3", 'title': '90 Min'},
+					{'id': "4", 'title': '120 Min'},
+					{'id': "5", 'title': '150 Min'},
+					{'id': "6", 'title': '180 Min'},
+					{'id': "7", 'title': '210 Min'}
+				];
+				const requested_minutes = parseInt(slots.find(slot => slot.id === slot_id).title);
 
-        const details = `Name: ${data.name}
-Email: ${data.email}
-Phone: ${data.phone}
-"${data.more_details}"`;
+				await fetchTimeList(date, requested_minutes);
 
-        return {
-          ...SCREEN_RESPONSES.SUMMARY,
-          data: {
-            appointment,
-            details,
-            // return the same fields sent from client back to submit in the next step
-            ...data,
-          },
-        };
+				if (anaesthetics_list.length === 0) {
+					await fetchAnaestheticsList();
+				}
 
-      // handles when user completes SUMMARY screen
-      case "SUMMARY":
-        // TODO: save appointment to your database
-        // send success response to complete and close the flow
-        return {
-          ...SCREEN_RESPONSES.SUCCESS,
-          data: {
-            extension_message_response: {
-              params: {
-                flow_token,
-              },
-            },
-          },
-        };
+				return {
+					...SCREEN_RESPONSES.QUESTION_TWO,
+					data: {
+						department: data.department,
+						date: data.date,
+						slot: data.slot,
+						preferred_time: time_list,
+						anesthetic_name: anaesthetics_list,
+						mobile: data.mobile,
+						is_time_enabled: true,
+					}
+				};
 
-      default:
-        break;
-    }
-  }
+			case "QUESTION_TWO":
+				//wriite a function to get preferred time title based on id from time_list
+				const pref_id = data.preferred_time;
+				const slot_duration = data.slot;
 
-  console.error("Unhandled request body:", decryptedBody);
-  throw new Error(
-    "Unhandled endpoint request. Make sure you handle the request action & screen logged above."
-  );
+				const getPreferredTimeTitle = (pref_id) => {
+					const time = time_list.find(time => time.id === pref_id);
+					return time ? time.title : "";
+				}
+
+				console.log("pref_id", getPreferredTimeTitle);
+				console.log("slot_duration", slot_duration);
+				console.log("myslots", slot_list);
+				const slot_size= [
+					{'id': "1", 'title': '30'},
+					{'id': "2", 'title': '60'},
+					{'id': "3", 'title': '90'},
+					{'id': "4", 'title': '120'},
+					{'id': "5", 'title': '150'},
+					{'id': "6", 'title': '180'},
+					{'id': "7", 'title': '210'}
+				];
+
+				const modifiedSlotDuration = slot_size.find(slot => slot.id === slot_duration).title;
+				
+				const bookingDetails = {
+					department: data.department,
+					date: data.date,
+					slot: modifiedSlotDuration,
+					anesthetic_name: data.anesthetic_name,
+					preferred_time: getPreferredTimeTitle(pref_id),
+					mobile: data.mobile,
+				};
+				// console.log("booking",bookingDetails);
+				const otBookingResult = await otConfirmation(bookingDetails);
+				// console.log("erpbooking", otBookingResult);
+				// Return the next screen response				
+				return {
+					...SCREEN_RESPONSES.QUESTION_THREE,
+					data: {
+						
+						ot: otBookingResult.ot,
+						date: otBookingResult.date,
+						start_time: otBookingResult.start_time,
+						end_time: otBookingResult.end_time,
+						anesthetic_name: otBookingResult.anesthetic_name
+					}
+				};
+
+			case "QUESTION_THREE":
+			
+				return {
+					...SCREEN_RESPONSES.SUCCESS,
+					data: {
+						extension_message_response: {
+							params: {
+								flow_token,
+							},
+						},
+					},
+				};
+
+			default:
+				break;
+		}
+	}
+
+	console.error("Unhandled request body:", decryptedBody);
+	throw new Error("Unhandled endpoint request. Make sure you handle the request action & screen logged above.");
 };

@@ -5,9 +5,19 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+
+
 import express from "express";
 import { decryptRequest, encryptResponse, FlowEndpointException } from "./encryption.js";
 import { getNextScreen } from "./flow.js";
+import { getNextAppointmentScreen } from "./appointment_flow.js";
+import { getNextPatientSelfRegistrationScreen } from "./new_patient_registration_by_patient_flow.js";
+import { getNextVitalPatientScreen } from "./vital_by_patient.js";
+import { VitalByDoctor } from "./vital_by_doctor.js";
+import { getNextDoctorRegistrationScreen } from "./new_doctor_registration.js";
+import { getPatientProfileScreen } from "./patient_profile.js";
+import { getPatientRelativeScreen } from "./patient_relative.js";
+import { getPatientRegistrationByDoctor } from "./patient_registration_by_doctor.js";
 import crypto from "crypto";
 import fs from "fs";
 
@@ -24,7 +34,10 @@ app.use(
 
 // const { APP_SECRET, PRIVATE_KEY, PASSPHRASE = "", PORT = "3000" } = process.env;
 const PORT = '3000'
+// AccXchange app secret
 const APP_SECRET='5b7f7dfdd286307d5cb53cac174ee05a'
+// sahaj app secret
+// const APP_SECRET='3e56bf3f7571d11ebb7e0bc2ffe653f5'
 const PRIVATE_KEY= fs.readFileSync('./src/private_new.pem', 'utf-8')
 const PASSPHRASE='Mohit@256951'
 /*
@@ -82,7 +95,6 @@ app.post("/appointment", async (req, res) => {
 
   const screenResponse = await getNextScreen(decryptedBody);
   console.log("👉 Response to Encrypt:", screenResponse);
-
   res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
 });
 
@@ -114,3 +126,285 @@ function isRequestSignatureValid(req) {
   }
   return true;
 }
+
+
+
+app.post("/new_doctor_registration", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+  const screenResponse = await getNextDoctorRegistrationScreen(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
+
+
+
+
+app.post("/new_patient_registration_by_patient_flow", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+  const screenResponse = await getNextPatientSelfRegistrationScreen(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
+
+
+
+
+app.post("/patient_registration_by_doctor", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+  const screenResponse = await getPatientRegistrationByDoctor(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
+
+
+
+
+app.post("/patient_profile", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+  const screenResponse = await getPatientProfileScreen(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
+
+
+
+
+
+app.post("/patient_relative", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+  const screenResponse = await getPatientRelativeScreen(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
+
+
+
+
+app.post("/vital_by_patient", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+  const screenResponse = await getNextVitalPatientScreen(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
+
+
+
+
+
+app.post("/vital_by_doctor", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+  const screenResponse = await VitalByDoctor(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
+
+
+
+
+
+app.post("/appointmentdirect", async (req, res) => {
+  if (!PRIVATE_KEY) {
+    throw new Error(
+      'Private key is empty. Please check your env variable "PRIVATE_KEY".'
+    );
+  }
+
+  if(!isRequestSignatureValid(req)) {
+    // Return status code 432 if request signature does not match.
+    // To learn more about return error codes visit: https://developers.facebook.com/docs/whatsapp/flows/reference/error-codes#endpoint_error_codes
+    return res.status(432).send();
+  }
+
+  let decryptedRequest = null;
+  try {
+    decryptedRequest = decryptRequest(req.body, PRIVATE_KEY, PASSPHRASE);
+  } catch (err) {
+    console.error(err);
+    if (err instanceof FlowEndpointException) {
+      return res.status(err.statusCode).send();
+    }
+    return res.status(500).send();
+  }
+
+  const { aesKeyBuffer, initialVectorBuffer, decryptedBody } = decryptedRequest;
+  console.log("💬 Decrypted Request:", decryptedBody);
+
+   const screenResponse = await getNextAppointmentScreen(decryptedBody);
+  console.log("👉 Response to Encrypt:", screenResponse);
+  res.send(encryptResponse(screenResponse, aesKeyBuffer, initialVectorBuffer));
+});
