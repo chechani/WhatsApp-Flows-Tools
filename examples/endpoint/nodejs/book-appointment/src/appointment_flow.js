@@ -1,6 +1,28 @@
-// Import required modules
 import axios from 'axios';
 import moment from 'moment';
+import { FrappeApp } from 'frappe-js-sdk';
+
+// Import required modules
+//Add your Frappe backend's URL
+const frappe = new FrappeApp('https://foss-erp.in');
+const auth = frappe.auth();
+auth
+	.loginWithUsernamePassword({ username: 'Administrator', password: 'Mohit@256951' })
+	.then(() => {
+		console.log('Logged in');
+		// Set the cookies for cross-domain requests
+		axios.defaults.withCredentials = true;
+	})
+	.catch((error) => console.error(error));
+auth
+	.getLoggedInUser()
+	.then((user) => console.log(`User ${user} is logged in.`))
+	.catch((error) => console.error(error));
+
+const db = frappe.db();
+db.getDocList('Lead')
+	.then((docs) => console.log(docs))
+	.catch((error) => console.error(error));
 
 
 // Define global variables
@@ -36,33 +58,33 @@ const fetchAnaestheticsList = async () => {
 	}
 };
 
-const fetchTimeList = async (date,requested_minutes) => {
-	try {
-		const response = await axios.get(`https://online.sahajhospital.com/api/method/hospital.wa_flow.available_slots?requested_minutes=${requested_minutes}&date=${date}`);
-		// console.log("bccresponse", response.data);
-		time_list = response.data.message.map(department => ({
-			id: department.id.toString(), // Convert id to string
-			title: department.title,
-		}));
-	} catch (error) {
-		console.error("Error fetching Time list:", error);
-		// Handle error if API call fails
-		throw new Error("Error fetching Time list");
-	}
-};
-
-
 // const fetchTimeList = async (date,requested_minutes) => {
 // 	try {
-// 		// const response = await axios.get(`https://online.sahajhospital.com/api/method/hospital.wa_flow.available_slots?requested_minutes=${requested_minutes}&date=${date}`);
+// 		const response = await axios.get(`https://online.sahajhospital.com/api/method/hospital.wa_flow.available_slots?requested_minutes=${requested_minutes}&date=${date}`);
 // 		// console.log("bccresponse", response.data);
-// 		time_list = [];
+// 		time_list = response.data.message.map(department => ({
+// 			id: department.id.toString(), // Convert id to string
+// 			title: department.title,
+// 		}));
 // 	} catch (error) {
 // 		console.error("Error fetching Time list:", error);
 // 		// Handle error if API call fails
 // 		throw new Error("Error fetching Time list");
 // 	}
 // };
+
+
+const fetchTimeList = async (date,requested_minutes) => {
+	try {
+		// const response = await axios.get(`https://online.sahajhospital.com/api/method/hospital.wa_flow.available_slots?requested_minutes=${requested_minutes}&date=${date}`);
+		// console.log("bccresponse", response.data);
+		time_list = [];
+	} catch (error) {
+		console.error("Error fetching Time list:", error);
+		// Handle error if API call fails
+		throw new Error("Error fetching Time list");
+	}
+};
 
 
 
@@ -108,6 +130,7 @@ const fetchDateList = async () => {
 };
 
 
+// To navigate to a screen, return the corresponding response from the endpoint. Make sure the response is enccrypted.
 // To navigate to a screen, return the corresponding response from the endpoint. Make sure the response is enccrypted.
 // To navigate to a screen, return the corresponding response from the endpoint. Make sure the response is enccrypted.
 // To navigate to a screen, return the corresponding response from the endpoint. Make sure the response is enccrypted.
@@ -232,7 +255,6 @@ const SCREEN_RESPONSES = {
                 "params": {
                     "flow_token": "REPLACE_FLOW_TOKEN",
                     "some_param_name": "PASS_CUSTOM_VALUE"
-					
                 }
             }
         }
@@ -450,4 +472,3 @@ export const getNextAppointmentScreen = async (decryptedBody) => {
 	console.error("Unhandled request body:", decryptedBody);
 	throw new Error("Unhandled endpoint request. Make sure you handle the request action & screen logged above.");
 };
-
