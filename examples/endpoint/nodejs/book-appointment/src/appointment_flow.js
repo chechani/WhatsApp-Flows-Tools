@@ -1,28 +1,28 @@
 import axios from 'axios';
 import moment from 'moment';
-import { FrappeApp } from 'frappe-js-sdk';
+// import { FrappeApp } from 'frappe-js-sdk';
 
-// Import required modules
-//Add your Frappe backend's URL
-const frappe = new FrappeApp('https://foss-erp.in');
-const auth = frappe.auth();
-auth
-	.loginWithUsernamePassword({ username: 'Administrator', password: 'Mohit@256951' })
-	.then(() => {
-		console.log('Logged in');
-		// Set the cookies for cross-domain requests
-		axios.defaults.withCredentials = true;
-	})
-	.catch((error) => console.error(error));
-auth
-	.getLoggedInUser()
-	.then((user) => console.log(`User ${user} is logged in.`))
-	.catch((error) => console.error(error));
+// // Import required modules
+// //Add your Frappe backend's URL
+// const frappe = new FrappeApp('https://foss-erp.in');
+// const auth = frappe.auth();
+// auth
+// 	.loginWithUsernamePassword({ username: 'Administrator', password: 'Mohit@256951' })
+// 	.then(() => {
+// 		console.log('Logged in');
+// 		// Set the cookies for cross-domain requests
+// 		axios.defaults.withCredentials = true;
+// 	})
+// 	.catch((error) => console.error(error));
+// auth
+// 	.getLoggedInUser()
+// 	.then((user) => console.log(`User ${user} is logged in.`))
+// 	.catch((error) => console.error(error));
 
-const db = frappe.db();
-db.getDocList('Lead')
-	.then((docs) => console.log(docs))
-	.catch((error) => console.error(error));
+// const db = frappe.db();
+// db.getDocList('Lead')
+// 	.then((docs) => console.log(docs))
+// 	.catch((error) => console.error(error));
 
 
 // Define global variables
