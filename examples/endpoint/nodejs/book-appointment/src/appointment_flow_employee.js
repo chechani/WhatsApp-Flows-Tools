@@ -8,20 +8,9 @@ let time_list = [];
 let date_list = [];
 let slot_list = [];
 let anaesthetics_list = [];
-let ot_list = [];
 let doctor_mobile = '';
 
-// fetch doctor list based on department
-const fetchSahajOtlist = async (department) => {
-	try {
-		const response = await axios.get(`https://online.sahajhospital.com/api/method/hospital.wa_flow.get_ot_list`);
-		ot_list = response.data.data;
-	} catch (error) {
-		console.error("Error fetching ot_list list:", error);
-		// Handle error if API call fails
-		throw new Error("Error fetching ot_listr list");
-	}
-};
+
 
 // fetch doctor list based on department
 const fetchSahajDoctorlistNew = async (department) => {
@@ -257,16 +246,7 @@ const SCREEN_RESPONSES = {
 					"title": "Dr Vinod Jain"
 				}
 			],
-			"ot": [
-				{
-					"id": "ot_1",
-					"title": "OT-1"
-				},
-				{
-					"id": "ot_2",
-					"title": "OT-2"
-				}
-			],
+		
 			"is_time_enabled": true
 		}
 	},
@@ -277,7 +257,6 @@ const SCREEN_RESPONSES = {
 			"dept": "Psychiatry",
 			"doctor": "Doctor",
 			"department": "Total Knee Replacement U\/L",
-			"ot": "ot-1",
 			"mobile": "918875627151",
 			"date": "2024-01-01",
 			"slot": "90 Min",
@@ -427,7 +406,7 @@ export const getNextAppointmentEmployeeScreen = async (decryptedBody) => {
 						await fetchAnaestheticsList();
 					}
 
-					await fetchSahajOtlist();
+				
 
 					const date = data.date;
 					const slot_id = data.slot;
@@ -472,8 +451,8 @@ export const getNextAppointmentEmployeeScreen = async (decryptedBody) => {
 								anesthetic_name: anaesthetics_list,
 								mobile: data.mobile,
 								is_time_enabled: true,
-								is_date_enabled: true,
-								ot: ot_list,
+								is_date_enabled: true
+								
 							}
 						};
 					}
@@ -505,8 +484,7 @@ export const getNextAppointmentEmployeeScreen = async (decryptedBody) => {
 								doctor: data.doctor,
 								anesthetic_name: data.anesthetic_name,
 								preferred_time: getPreferredTimeTitle(pref_id),
-								mobile: data.mobile,
-								ot: data.ot,
+								mobile: data.mobile,								
 								ot_remarks: data.ot_remarks,
 
 							},
